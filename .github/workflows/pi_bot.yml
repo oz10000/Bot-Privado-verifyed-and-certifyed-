@@ -2,24 +2,29 @@ name: PiDelta Bot
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '0 */6 * * *'
   workflow_dispatch:
+
+concurrency:
+  group: pidelta-bot
+  cancel-in-progress: false
 
 env:
   OKX_API_KEY: ${{ secrets.OKX_API_KEY }}
   OKX_SECRET_KEY: ${{ secrets.OKX_SECRET_KEY }}
   OKX_PASSPHRASE: ${{ secrets.OKX_PASSPHRASE }}
-  OKX_DEMO: ${{ secrets.OKX_DEMO || 'true' }}
+  OKX_DEMO: ${{ secrets.OKX_DEMO != '' && secrets.OKX_DEMO || 'true' }}
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+    timeout-minutes: 355
 
     steps:
+      - name: Limpiar bloqueos residuales
+        run: |
+          rm -f .lock
+
       - name: Checkout repositorio
         uses: actions/checkout@v4
 
@@ -58,15 +63,16 @@ jobs:
           echo "🏁 Bot finalizado a las $(date -u '+%Y-%m-%d %H:%M:%S UTC') con código $EXIT_CODE"
           exit $EXIT_CODE
 
-      - name: Subir logs (siempre)
+      - name: Subir logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: logs-${{ github.run_id }}
           path: logs/
           retention-days: 7
+        continue-on-error: true
 
-      - name: Notificar fallo (solo si falla)
+      - name: Notificar fallo
         if: failure()
         run: |
           echo "❌ El bot ha fallado en la ejecución ${{ github.run_id }}"
