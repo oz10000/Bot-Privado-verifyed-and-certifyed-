@@ -1,23 +1,22 @@
+# config.py
 # ============================================================
-# SÍMBOLOS Y OPERATIVA
+# CONFIGURACIÓN CENTRAL – VERSIÓN FINAL (CON BACKTEST CONSTANTS)
 # ============================================================
-SYMBOLS = ['BTC', 'ETH', 'SOL', 'ADA', 'XRP']
-TRADE_NOTIONAL = 1000.0      # USDT por operación
-LEVERAGE = 10                # Apalancamiento fijo
 
-# ============================================================
-# TP, SL Y TRAILING STOP (optimizados)
-# ============================================================
+# ---- Símbolos y operativa ----
+SYMBOLS = ['BTC', 'ETH', 'SOL', 'ADA', 'XRP']
+TRADE_NOTIONAL = 1000.0
+LEVERAGE = 10
+
+# ---- TP, SL y Trailing ----
 TP_MULT = 1.2
 SL_MULT = 1.5
-TRAILING_ENABLED = True
-TRAILING_MODE = 'native'              # 'native' (OKX) o 'virtual'
-TRAILING_DISTANCE_ATR = 0.8           # Múltiplos de ATR
-TRAILING_ACTIVATION_PROFIT = 0.8      # % beneficio para activar
+TRAILING_ENABLED = False
+TRAILING_MODE = 'native'
+TRAILING_DISTANCE_ATR = 0.8
+TRAILING_ACTIVATION_PROFIT = 0.8
 
-# ============================================================
-# AUTOSPEED (niveles de velocidad)
-# ============================================================
+# ---- Niveles de velocidad (AutoSpeed) ----
 SPEED_LEVELS = [
     {"nivel": 1, "raw_min": 0.45, "roc_min": 0.30},
     {"nivel": 2, "raw_min": 0.40, "roc_min": 0.25},
@@ -26,19 +25,24 @@ SPEED_LEVELS = [
     {"nivel": 5, "raw_min": 0.25, "roc_min": 0.10},
     {"nivel": 6, "raw_min": 0.20, "roc_min": 0.05},
 ]
-DEFAULT_SPEED_LEVEL = SPEED_LEVELS[2]  # Nivel 3 (optimizado)
+DEFAULT_SPEED_LEVEL = SPEED_LEVELS[2]  # Nivel 3
 
-# ============================================================
-# FILTRO HORARIO Y DIAS
-# ============================================================
+# ---- PARÁMETROS OPTIMIZADOS (WALK-FORWARD 1 AÑO) ----
+OPTIMIZED_LEVELS = {
+    'BTC': {'Long': SPEED_LEVELS[1], 'Short': SPEED_LEVELS[2]},   # Nivel 2 y 3
+    'ETH': {'Long': SPEED_LEVELS[0], 'Short': SPEED_LEVELS[1]},   # Nivel 1 y 2
+    'SOL': {'Long': SPEED_LEVELS[3], 'Short': SPEED_LEVELS[3]},   # Nivel 4
+    'ADA': {'Long': SPEED_LEVELS[3], 'Short': SPEED_LEVELS[4]},   # Nivel 4 y 5
+    'XRP': {'Long': SPEED_LEVELS[3], 'Short': SPEED_LEVELS[4]},   # Nivel 4 y 5
+}
+
+# ---- Filtro horario ----
 TIME_FILTER_ENABLED = True
-TIME_FILTER_START = 12      # UTC
+TIME_FILTER_START = 12
 TIME_FILTER_END = 18
-TIME_FILTER_WEEKDAYS = [0, 1, 2, 3, 4]  # Lunes a Viernes
+TIME_FILTER_WEEKDAYS = [0, 1, 2, 3, 4]
 
-# ============================================================
-# FILTROS POR ACTIVO (optimizados)
-# ============================================================
+# ---- Filtros por activo ----
 FILTERS = {
     'BTC': {'Long': {'ker_min': 0.55, 'zscore_min': 1.2},
             'Short': {'zscore_max': -1.8, 'vol_rel_min': 1.8}},
@@ -52,19 +56,17 @@ FILTERS = {
             'Short': {'ker_min': 0.40, 'zscore_max': -0.8, 'vol_rel_min': 1.5}}
 }
 
-# ============================================================
-# RECUPERACIÓN, REINTENTOS Y TIMEOUTS
-# ============================================================
+# ---- Recuperación y reintentos ----
 MAX_RECONNECT_ATTEMPTS = 3
 RECONNECT_BACKOFF = 5
 MAX_RETRIES_PER_ORDER = 3
 ORDER_TIMEOUT = 15
 LOCK_FILE = '.lock'
 LOCK_TIMEOUT = 10
+SYNC_TIME_ENABLED = True
+MAX_CONSECUTIVE_ERRORS = 5
 
-# ============================================================
-# LOGGING Y AUDITORÍA
-# ============================================================
+# ---- Logging ----
 LOG_DIR = 'logs'
 LOG_LEVEL = 'INFO'
 LOG_CONSOLE = True
@@ -73,32 +75,29 @@ LOG_JSON = True
 MAX_LOG_SIZE_MB = 10
 MAX_LOG_FILES = 5
 
-# ============================================================
-# MODO DEMO / LIVE (se lee de variable de entorno)
-# ============================================================
-OKX_DEMO = True   # por defecto, se sobrescribe con os.environ
+# ---- Modo demo ----
+OKX_DEMO = True
 
-# ============================================================
-# UMBRALES DE SALUD (Health Check)
-# ============================================================
-MAX_MEMORY_MB = 256
-MAX_DISK_USAGE_MB = 100
-MAX_LATENCY_MS = 2000
-MAX_CYCLE_DURATION_SEC = 60
-MAX_CONSECUTIVE_ERRORS = 5
-MAX_DAILY_LOSS_PERCENT = 5.0
-MAX_DRAWDOWN_PERCENT = 10.0
+# ---- Límites de riesgo ----
+MAX_DAILY_LOSS_PERCENT = 2.0
+MAX_WEEKLY_LOSS_PERCENT = 4.0
+MAX_OPEN_POSITIONS = 3
 
-# ============================================================
-# VERIFICACIÓN AUTÓNOMA
-# ============================================================
+# ---- Backtesting (SOLO PARA COMPATIBILIDAD CON signals.py) ----
+# Estas constantes no se usan en producción, pero son necesarias para importar signals.py
+BACKTEST_DAYS = 30
+BACKTEST_FEE_MAKER = 0.0005
+BACKTEST_FEE_TAKER = 0.0007
+BACKTEST_SLIPPAGE = 0.0002
+
+# ---- Verificación ----
 if __name__ == "__main__":
     print("="*70)
     print("🧪 VERIFICACIÓN DE CONFIGURACIÓN")
     print("="*70)
     required = ['SYMBOLS', 'TRADE_NOTIONAL', 'LEVERAGE', 'TP_MULT', 'SL_MULT',
-                'TRAILING_ENABLED', 'TRAILING_DISTANCE_ATR', 'DEFAULT_SPEED_LEVEL',
-                'TIME_FILTER_ENABLED', 'FILTERS', 'LOG_DIR']
+                'OPTIMIZED_LEVELS', 'TIME_FILTER_ENABLED', 'FILTERS', 'LOG_DIR',
+                'BACKTEST_SLIPPAGE']   # añadido para verificar que existe
     for v in required:
         assert v in globals(), f"Falta {v}"
         print(f"  ✅ {v}")
